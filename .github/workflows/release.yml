@@ -1,20 +1,19 @@
 name: Build and Release
 
-# 当推送 tag 时触发（如 v1.0.0, v1.2.3）
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  # 多平台并行构建
   build:
     strategy:
-      # 即使某个平台构建失败，也继续构建其他平台
       fail-fast: false
       matrix:
         include:
-          # Windows 构建
           - os: windows-latest
             platform: win
             build_cmd: npm run dist:win
@@ -22,14 +21,12 @@ jobs:
             artifact_path: |
               release/*.exe
               release/*.zip
-          # macOS 构建
           - os: macos-latest
             platform: mac
             build_cmd: npm run dist:mac
             artifact_name: release-macos
             artifact_path: |
               release/*.dmg
-          # Linux 构建
           - os: ubuntu-latest
             platform: linux
             build_cmd: npm run dist:linux
@@ -39,30 +36,32 @@ jobs:
               release/*.deb
 
     runs-on: ${{ matrix.os }}
-    
+
     steps:
-      # 1. 检出代码
       - name: Checkout code
         uses: actions/checkout@v4
-      
-      # 2. 安装 Node.js
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
-      # 3. 安装依赖
+
+      - name: Install system dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libpixman-1-dev libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+
       - name: Install dependencies
         run: npm ci
-      
-      # 4. 打包 Electron 应用
+
       - name: Build Electron app for ${{ matrix.platform }}
         run: ${{ matrix.build_cmd }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      # 5. 上传构建产物
+          ELECTRON_MIRROR: https://registry.npmmirror.com/-/binary/electron/
+
       - name: Upload ${{ matrix.platform }} artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -70,13 +69,13 @@ jobs:
           path: ${{ matrix.artifact_path }}
           retention-days: 5
 
-  # 创建 Release 并上传所有平台的文件
   release:
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -88,7 +87,6 @@ jobs:
           awk "/^## \[$VERSION\]/{flag=1;next} /^## /{flag=0} flag" CHANGELOG.md > RELEASE_NOTE.md
           cat RELEASE_NOTE.md
 
-      # 下载所有平台的构建产物
       - name: Download Windows artifacts
         uses: actions/download-artifact@v4
         with:
@@ -109,14 +107,12 @@ jobs:
           name: release-linux
           path: ./release
         continue-on-error: true
-      
-      # 列出所有下载的文件（调试用）
+
       - name: List release files
         run: |
           echo "=== Release files ==="
           ls -la ./release || echo "No release directory"
-      
-      # 创建 Release 并上传文件
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
