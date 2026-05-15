@@ -67,7 +67,7 @@ function checkNativeModules(): { success: boolean; failedModules: string[] } {
 // 正常模块导入（在原生模块检查后进行）
 // ============================================================================
 import LCUConnector from "../src-backend/lcu/utils/LcuConnector.ts";
-import LCUManager, { LcuEventUri, LCUWebSocketMessage } from "../src-backend/lcu/LCUManager.ts";
+import LCUManager, { LCUWebSocketMessage } from "../src-backend/lcu/LCUManager.ts";
 import GameConfigHelper from "../src-backend/utils/GameConfigHelper.ts";
 import {IpcChannel} from "./protocol.ts";
 import {logger} from "../src-backend/utils/Logger.ts";
@@ -237,7 +237,8 @@ function createOverlayWindow(gameWindowInfo: { left: number; top: number; width:
     }
 
     // 获取 DPI 缩放因子（物理像素 → 逻辑像素的转换）
-    const { screen: electronScreen } = require('electron');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const electronScreen = require('electron').screen;
     const primaryDisplay = electronScreen.getPrimaryDisplay();
     const scaleFactor = primaryDisplay.scaleFactor;
 
@@ -684,26 +685,26 @@ function registerHandler() {
         }
     });
     //  游戏设置备份
-    ipcMain.handle(IpcChannel.CONFIG_BACKUP, async (event) => GameConfigHelper.backup())
-    ipcMain.handle(IpcChannel.CONFIG_RESTORE, async (event) => GameConfigHelper.restore())
+    ipcMain.handle(IpcChannel.CONFIG_BACKUP, async () => GameConfigHelper.backup())
+    ipcMain.handle(IpcChannel.CONFIG_RESTORE, async () => GameConfigHelper.restore())
     //  海克斯核心科技
-    ipcMain.handle(IpcChannel.HEX_START, async (event) => hexService.start())
-    ipcMain.handle(IpcChannel.HEX_STOP, async (event) => hexService.stop())
-    ipcMain.handle(IpcChannel.HEX_GET_STATUS, async (event) => hexService.isRunning)
+    ipcMain.handle(IpcChannel.HEX_START, async () => hexService.start())
+    ipcMain.handle(IpcChannel.HEX_STOP, async () => hexService.stop())
+    ipcMain.handle(IpcChannel.HEX_GET_STATUS, async () => hexService.isRunning)
     //  TFT相关操作
-    ipcMain.handle(IpcChannel.TFT_BUY_AT_SLOT, async (event, slot: number) => tftOperator.buyAtSlot(slot))
-    ipcMain.handle(IpcChannel.TFT_GET_SHOP_INFO, async (event) => tftOperator.getShopInfo())
-    ipcMain.handle(IpcChannel.TFT_GET_EQUIP_INFO, async (event) => tftOperator.getEquipInfo())
-    ipcMain.handle(IpcChannel.TFT_GET_BENCH_INFO, async (event) => tftOperator.getBenchInfo())
-    ipcMain.handle(IpcChannel.TFT_GET_FIGHT_BOARD_INFO, async (event) => tftOperator.getFightBoardInfo())
-    ipcMain.handle(IpcChannel.TFT_GET_LEVEL_INFO, async (event) => tftOperator.getLevelInfo())
-    ipcMain.handle(IpcChannel.TFT_GET_COIN_COUNT, async (event) => tftOperator.getCoinCount())
-    ipcMain.handle(IpcChannel.TFT_GET_LOOT_ORBS, async (event) => tftOperator.getLootOrbs())
-    ipcMain.handle(IpcChannel.TFT_GET_STAGE_INFO, async (event) => tftOperator.getGameStage())
-    ipcMain.handle(IpcChannel.TFT_SAVE_STAGE_SNAPSHOTS, async (event) => tftOperator.saveStageSnapshots())
-    ipcMain.handle(IpcChannel.TFT_TEST_SAVE_BENCH_SLOT_SNAPSHOT, async (event) => tftOperator.saveBenchSlotSnapshots())
-    ipcMain.handle(IpcChannel.TFT_TEST_SAVE_FIGHT_BOARD_SLOT_SNAPSHOT, async (event) => tftOperator.saveFightBoardSlotSnapshots())
-    ipcMain.handle(IpcChannel.TFT_TEST_SAVE_QUIT_BUTTON_SNAPSHOT, async (event) => tftOperator.saveQuitButtonSnapshot())
+    ipcMain.handle(IpcChannel.TFT_BUY_AT_SLOT, async (_event, slot: number) => tftOperator.buyAtSlot(slot))
+    ipcMain.handle(IpcChannel.TFT_GET_SHOP_INFO, async () => tftOperator.getShopInfo())
+    ipcMain.handle(IpcChannel.TFT_GET_EQUIP_INFO, async () => tftOperator.getEquipInfo())
+    ipcMain.handle(IpcChannel.TFT_GET_BENCH_INFO, async () => tftOperator.getBenchInfo())
+    ipcMain.handle(IpcChannel.TFT_GET_FIGHT_BOARD_INFO, async () => tftOperator.getFightBoardInfo())
+    ipcMain.handle(IpcChannel.TFT_GET_LEVEL_INFO, async () => tftOperator.getLevelInfo())
+    ipcMain.handle(IpcChannel.TFT_GET_COIN_COUNT, async () => tftOperator.getCoinCount())
+    ipcMain.handle(IpcChannel.TFT_GET_LOOT_ORBS, async () => tftOperator.getLootOrbs())
+    ipcMain.handle(IpcChannel.TFT_GET_STAGE_INFO, async () => tftOperator.getGameStage())
+    ipcMain.handle(IpcChannel.TFT_SAVE_STAGE_SNAPSHOTS, async () => tftOperator.saveStageSnapshots())
+    ipcMain.handle(IpcChannel.TFT_TEST_SAVE_BENCH_SLOT_SNAPSHOT, async () => tftOperator.saveBenchSlotSnapshots())
+    ipcMain.handle(IpcChannel.TFT_TEST_SAVE_FIGHT_BOARD_SLOT_SNAPSHOT, async () => tftOperator.saveFightBoardSlotSnapshots())
+    ipcMain.handle(IpcChannel.TFT_TEST_SAVE_QUIT_BUTTON_SNAPSHOT, async () => tftOperator.saveQuitButtonSnapshot())
     
     // 阵容相关
     ipcMain.handle(IpcChannel.LINEUP_GET_ALL, async (_event, season?: string) => {

@@ -109,13 +109,6 @@ const StyledNavLink = styled(NavLink)<{ $isCollapsed: boolean }>`
   }
 `;
 
-const Version = styled.div`
-  margin-top: auto;
-  text-align: center;
-  font-size: 0.75rem;
-  color: #4a5568;
-`;
-
 const ToggleButton = styled.button`
   margin-top: auto;
   background-color: ${props => props.theme.colors.elementHover};

@@ -57,18 +57,6 @@ const SettingInfo = styled.div`
   gap: ${props => props.theme.spacing.large};
 `;
 
-const IconWrapper = styled.div`
-  color: ${props => props.theme.colors.primary};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  // 给 Material Icon 设置一下大小
-  .MuiSvgIcon-root {
-    font-size: 28px;
-  }
-`;
-
 const SettingText = styled.div`
   h3 {
     font-size: ${props => props.theme.fontSizes.medium};

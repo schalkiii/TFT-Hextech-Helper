@@ -666,7 +666,7 @@ export class TemplateLoader {
 
             const { data, info } = await pipeline.raw().toBuffer({ resolveWithObject: true });
 
-            let channels = info.channels;
+            const channels = info.channels;
             // sharp 的 info.channels 会返回实际通道数
             
             // 验证数据长度

@@ -677,7 +677,7 @@ const ChampionAvatar = styled.div<{ $isCore: boolean; $cost?: number; $rotateX?:
   /* 根据英雄费用显示不同颜色的边框 */
   border: 2.5px solid ${props => {
       const cost = props.$cost;
-      // @ts-ignore
+      // @ts-expect-error - championCost 可能没有对应费用的颜色定义
       const color = props.theme.colors.championCost[cost];
       return color || props.theme.colors.championCost.default;
   }};
@@ -823,7 +823,7 @@ const SmallChampionAvatar = styled.div<{ $cost?: number; theme: ThemeType }>`
   overflow: hidden;
   border: 2px solid ${props => {
     const cost = props.$cost;
-    // @ts-ignore
+    // @ts-expect-error - championCost 可能没有对应费用的颜色定义
     const color = props.theme.colors.championCost[cost];
     return color || props.theme.colors.championCost.default;
   }};
@@ -1835,6 +1835,17 @@ const SmallChampionAvatarComponent: React.FC<{
     );
 };
 
+/** 等级配置：等级数字、key、是否必填 */
+const LEVEL_CONFIG = [
+    { level: 4, key: 'level4', required: true },
+    { level: 5, key: 'level5', required: true },
+    { level: 6, key: 'level6', required: true },
+    { level: 7, key: 'level7', required: true },
+    { level: 8, key: 'level8', required: true },
+    { level: 9, key: 'level9', required: false },
+    { level: 10, key: 'level10', required: false },
+];
+
 // ==================== 主组件 ====================
 
 const LineupsPage: React.FC = () => {
@@ -1997,17 +2008,6 @@ const LineupsPage: React.FC = () => {
 
     /** 装备浮窗中临时选择的装备（最多 3 个） */
     const [tempEquips, setTempEquips] = useState<string[]>([]);
-
-    /** 等级配置：等级数字、key、是否必填 */
-    const LEVEL_CONFIG = [
-        { level: 4, key: 'level4', required: true },
-        { level: 5, key: 'level5', required: true },
-        { level: 6, key: 'level6', required: true },
-        { level: 7, key: 'level7', required: true },
-        { level: 8, key: 'level8', required: true },
-        { level: 9, key: 'level9', required: false },
-        { level: 10, key: 'level10', required: false },
-    ];
 
     /**
      * 按费用分组当前赛季的所有棋子

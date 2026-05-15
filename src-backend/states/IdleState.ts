@@ -20,6 +20,7 @@ export class IdleState implements IState {
      * @returns 返回自身，保持空闲状态
      * @description 空闲状态下不做任何操作，等待外部触发状态转换
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async action(_signal: AbortSignal): Promise<IState> {
         // 空闲状态不执行任何操作，保持当前状态
         return this;

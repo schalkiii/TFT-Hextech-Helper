@@ -439,7 +439,7 @@ class TftOperator {
                 logger.debug(`[商店槽位 ${i}] 识别成功 -> ${tftUnit.displayName} (${tftUnit.price}费)`);
                 shopUnits.push(tftUnit);
             } else {
-                this.handleRecognitionFailure("shop", i, cleanName, processedPng);
+                this.handleRecognitionFailure("shop", i, cleanName);
                 shopUnits.push(null);
             }
         }
@@ -750,7 +750,7 @@ class TftOperator {
                     });
                 } else {
                     // 英雄和锻造器都识别失败，说明是误识别（空槽位被误判为有棋子）
-                    this.handleRecognitionFailure("bench", benchSlot.slice(-1), cleanName, namePng);
+                    this.handleRecognitionFailure("bench", benchSlot.slice(-1), cleanName);
                     benchUnits.push(null);
                     
                     // 归位小小英雄：右键点击空槽位会导致小小英雄走过去，影响后续识别
@@ -842,7 +842,7 @@ class TftOperator {
                 });
             } else {
                 // 识别失败
-                this.handleRecognitionFailure("board", boardSlot, cleanName, namePng);
+                this.handleRecognitionFailure("board", boardSlot, cleanName);
                 boardUnits.push(null);
             }
         }
@@ -1392,7 +1392,6 @@ class TftOperator {
         type: "shop" | "bench" | "board",
         slot: string | number,
         recognizedName: string | null,
-        imageBuffer: Buffer
     ): void {
         if (recognizedName === "empty") {
             logger.debug(`[${type}槽位 ${slot}] 识别为空槽位`);

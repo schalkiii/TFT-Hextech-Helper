@@ -263,7 +263,7 @@ export class StrategyService {
             return;
         }
 
-        const {type, stageText, stage, round, isNewStage} = event;
+        const {stage, round} = event;
 
         // 更新当前阶段/回合
         this.currentStage = stage;
@@ -2305,6 +2305,7 @@ export class StrategyService {
         // 走动间隔（毫秒）
         const walkInterval = 3000;
 
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             // 退出条件 1：战斗状态发生变化（非战斗→战斗 或 战斗→非战斗）
             if (this.isFighting() !== entryFightingState) {
@@ -2542,7 +2543,7 @@ export class StrategyService {
         const snapshot = gameStateManager.getSnapshotSync();
         if (!snapshot) return;
 
-        let {level, currentXp, totalXp, gold} = snapshot;
+        const {level, currentXp, totalXp, gold} = snapshot;
 
         // 已达最大等级 (10 为上限)
         if (level >= 10 || totalXp <= 0) return;
@@ -3256,6 +3257,7 @@ export class StrategyService {
         // 点击间隔（毫秒）
         const clickInterval = 2000;
 
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             // 检查是否已经进入下一个回合（stageText 变化说明选秀结束）
             if (gameStageMonitor.stageText !== entryStageText) {

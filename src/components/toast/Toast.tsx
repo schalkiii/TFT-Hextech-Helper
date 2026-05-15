@@ -1,6 +1,6 @@
 import {keyframes} from "@mui/material";
 import styled from "styled-components";
-import store, {toast, ToastMessage, ToastPosition, ToastType} from "./toast-core.ts";
+import store, {ToastMessage, ToastPosition, ToastType} from "./toast-core.ts";
 import {ThemeType} from "../../styles/theme.ts";
 import {useEffect, useMemo, useState} from "react";
 import InfoIcon from '@mui/icons-material/InfoOutlined';

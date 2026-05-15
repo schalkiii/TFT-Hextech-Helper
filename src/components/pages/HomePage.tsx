@@ -1362,6 +1362,7 @@ export const HomePage = () => {
             cleanupConnect();
             cleanupDisconnect();
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // 订阅统计数据变化 + 运行时长计时器

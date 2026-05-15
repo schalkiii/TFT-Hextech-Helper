@@ -23,6 +23,7 @@ export class EndState implements IState {
      * @param _signal AbortSignal (此状态不需要，但为保持接口一致性保留)
      * @returns 返回 IdleState，回到空闲状态
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async action(_signal: AbortSignal): Promise<IdleState> {
         // 重置策略服务状态（如果 GameRunningState 没有正常清理的话，这里兜底）
         strategyService.reset();

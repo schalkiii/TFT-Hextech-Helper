@@ -248,6 +248,7 @@ class AnalyticsManager {
     private generateUUID(): string {
         // Node.js 14.17+ 和 Electron 都支持 crypto.randomUUID()
         try {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
             return require('crypto').randomUUID();
         } catch {
             // 降级方案：手动生成 UUID v4

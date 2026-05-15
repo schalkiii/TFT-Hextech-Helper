@@ -268,6 +268,7 @@ export class GameRunningState implements IState {
             /**
              * 发条鸟模式：监听 stageChange 事件，用于重置超时计时器
              */
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const onStageChange = (_event: GameStageEvent) => {
                 logger.debug("[GameRunningState] 发条鸟模式：收到 stageChange 事件，重置超时计时器");
                 resetStageTimeout();
@@ -302,6 +303,7 @@ export class GameRunningState implements IState {
              *              
              *              发条鸟模式不走这条路，发条鸟靠 clockworkDead 事件 + 点击退出按钮
              */
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const onBattlePass = async (_eventData: LCUWebSocketMessage) => {
                 if (hasTriedQuit) return; // 避免重复调用
                 hasTriedQuit = true;

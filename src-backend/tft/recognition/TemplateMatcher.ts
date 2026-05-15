@@ -9,7 +9,7 @@ import path from "path";
 import fs from "fs-extra";
 import sharp from "sharp";
 import {logger} from "../../utils/Logger";
-import {IdentifiedEquip, EquipCategory, EQUIP_CATEGORY_PRIORITY, LootOrb, LootOrbType} from "../types";
+import {IdentifiedEquip, EQUIP_CATEGORY_PRIORITY, LootOrb} from "../types";
 import { getCurrentEquipData } from "../../TFTInfo/SeasonRegistry";
 import {templateLoader} from "./TemplateLoader";
 
@@ -392,6 +392,7 @@ export class TemplateMatcher {
                 const templateHeight = templateMat.rows;
 
                 // 使用循环查找所有匹配点
+                // eslint-disable-next-line no-constant-condition
                 while (true) {
                     const minMax = cv.minMaxLoc(resultMat, mask);
                     
