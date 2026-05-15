@@ -6222,6 +6222,10 @@ var IpcChannel = /* @__PURE__ */ ((IpcChannel2) => {
   IpcChannel2["HEX_CLEAR_SCHEDULED_STOP"] = "hex-clear-scheduled-stop";
   IpcChannel2["HEX_GET_SCHEDULED_STOP"] = "hex-get-scheduled-stop";
   IpcChannel2["HEX_SCHEDULED_STOP_TRIGGERED"] = "hex-scheduled-stop-triggered";
+  IpcChannel2["HEX_SET_STOP_AFTER_GAMES"] = "hex-set-stop-after-games";
+  IpcChannel2["HEX_GET_STOP_AFTER_GAMES"] = "hex-get-stop-after-games";
+  IpcChannel2["HEX_CLEAR_STOP_AFTER_GAMES"] = "hex-clear-stop-after-games";
+  IpcChannel2["HEX_STOP_AFTER_GAMES_TRIGGERED"] = "hex-stop-after-games-triggered";
   IpcChannel2["APP_GET_VERSION"] = "app-get-version";
   IpcChannel2["APP_CHECK_UPDATE"] = "app-check-update";
   IpcChannel2["OVERLAY_SHOW"] = "overlay-show";
@@ -13259,7 +13263,7 @@ function createOverlayWindow(gameWindowInfo) {
     overlayWindow.close();
     overlayWindow = null;
   }
-  const { screen: electronScreen } = require2("electron");
+  const electronScreen = require2("electron").screen;
   const primaryDisplay = electronScreen.getPrimaryDisplay();
   const scaleFactor = primaryDisplay.scaleFactor;
   const logicalLeft = Math.round(gameWindowInfo.left / scaleFactor);
@@ -13427,9 +13431,9 @@ app.whenReady().then(async () => {
   console.log("✅ [Main] 原生模块检查通过");
   console.log("🚀 [Main] 正在加载业务模块...");
   try {
-    const ServicesModule = await import("./chunks/index-BihQ9x99.js");
+    const ServicesModule = await import("./chunks/index-CssVoUhD.js");
     hexService = ServicesModule.hexService;
-    const TftOperatorModule = await import("./chunks/TftOperator-DVERg1ZX.js").then((n) => n.T);
+    const TftOperatorModule = await import("./chunks/TftOperator-DdUK-GYs.js").then((n) => n.T);
     tftOperator = TftOperatorModule.tftOperator;
     const LineupModule = await import("./chunks/index-bGCrXB73.js");
     lineupLoader = LineupModule.lineupLoader;
@@ -13466,6 +13470,28 @@ app.whenReady().then(async () => {
   registerToggleHotkey(savedHotkey);
   const savedStopAfterGameHotkey = settingsStore.get("stopAfterGameHotkeyAccelerator");
   registerStopAfterGameHotkey(savedStopAfterGameHotkey);
+  const argv = process.argv.slice(2);
+  const shouldAutoStart = argv.includes("--start");
+  const gamesArg = argv.find((arg) => arg.startsWith("--games="));
+  const autoStartGames = gamesArg ? parseInt(gamesArg.split("=")[1], 10) : 0;
+  if (shouldAutoStart) {
+    console.log(`🚀 [Main] 检测到 --start 参数，将在初始化完成后自动启动`);
+    if (autoStartGames > 0) {
+      console.log(`🚀 [Main] 检测到 --games=${autoStartGames} 参数，将在运行 ${autoStartGames} 局后停止`);
+      hexService.setStopAfterGames(autoStartGames);
+    }
+    setTimeout(async () => {
+      if (!hexService.isRunning) {
+        console.log("🚀 [Main] 正在自动启动挂机...");
+        const success = await hexService.start();
+        if (success) {
+          console.log("✅ [Main] 自动启动成功");
+        } else {
+          console.error("❌ [Main] 自动启动失败");
+        }
+      }
+    }, 3e3);
+  }
 });
 function init() {
   logger.init(win);
@@ -13516,24 +13542,24 @@ function registerHandler() {
       return { error: e.message };
     }
   });
-  ipcMain.handle(IpcChannel.CONFIG_BACKUP, async (event) => GameConfigHelper.backup());
-  ipcMain.handle(IpcChannel.CONFIG_RESTORE, async (event) => GameConfigHelper.restore());
-  ipcMain.handle(IpcChannel.HEX_START, async (event) => hexService.start());
-  ipcMain.handle(IpcChannel.HEX_STOP, async (event) => hexService.stop());
-  ipcMain.handle(IpcChannel.HEX_GET_STATUS, async (event) => hexService.isRunning);
-  ipcMain.handle(IpcChannel.TFT_BUY_AT_SLOT, async (event, slot) => tftOperator.buyAtSlot(slot));
-  ipcMain.handle(IpcChannel.TFT_GET_SHOP_INFO, async (event) => tftOperator.getShopInfo());
-  ipcMain.handle(IpcChannel.TFT_GET_EQUIP_INFO, async (event) => tftOperator.getEquipInfo());
-  ipcMain.handle(IpcChannel.TFT_GET_BENCH_INFO, async (event) => tftOperator.getBenchInfo());
-  ipcMain.handle(IpcChannel.TFT_GET_FIGHT_BOARD_INFO, async (event) => tftOperator.getFightBoardInfo());
-  ipcMain.handle(IpcChannel.TFT_GET_LEVEL_INFO, async (event) => tftOperator.getLevelInfo());
-  ipcMain.handle(IpcChannel.TFT_GET_COIN_COUNT, async (event) => tftOperator.getCoinCount());
-  ipcMain.handle(IpcChannel.TFT_GET_LOOT_ORBS, async (event) => tftOperator.getLootOrbs());
-  ipcMain.handle(IpcChannel.TFT_GET_STAGE_INFO, async (event) => tftOperator.getGameStage());
-  ipcMain.handle(IpcChannel.TFT_SAVE_STAGE_SNAPSHOTS, async (event) => tftOperator.saveStageSnapshots());
-  ipcMain.handle(IpcChannel.TFT_TEST_SAVE_BENCH_SLOT_SNAPSHOT, async (event) => tftOperator.saveBenchSlotSnapshots());
-  ipcMain.handle(IpcChannel.TFT_TEST_SAVE_FIGHT_BOARD_SLOT_SNAPSHOT, async (event) => tftOperator.saveFightBoardSlotSnapshots());
-  ipcMain.handle(IpcChannel.TFT_TEST_SAVE_QUIT_BUTTON_SNAPSHOT, async (event) => tftOperator.saveQuitButtonSnapshot());
+  ipcMain.handle(IpcChannel.CONFIG_BACKUP, async () => GameConfigHelper.backup());
+  ipcMain.handle(IpcChannel.CONFIG_RESTORE, async () => GameConfigHelper.restore());
+  ipcMain.handle(IpcChannel.HEX_START, async () => hexService.start());
+  ipcMain.handle(IpcChannel.HEX_STOP, async () => hexService.stop());
+  ipcMain.handle(IpcChannel.HEX_GET_STATUS, async () => hexService.isRunning);
+  ipcMain.handle(IpcChannel.TFT_BUY_AT_SLOT, async (_event, slot) => tftOperator.buyAtSlot(slot));
+  ipcMain.handle(IpcChannel.TFT_GET_SHOP_INFO, async () => tftOperator.getShopInfo());
+  ipcMain.handle(IpcChannel.TFT_GET_EQUIP_INFO, async () => tftOperator.getEquipInfo());
+  ipcMain.handle(IpcChannel.TFT_GET_BENCH_INFO, async () => tftOperator.getBenchInfo());
+  ipcMain.handle(IpcChannel.TFT_GET_FIGHT_BOARD_INFO, async () => tftOperator.getFightBoardInfo());
+  ipcMain.handle(IpcChannel.TFT_GET_LEVEL_INFO, async () => tftOperator.getLevelInfo());
+  ipcMain.handle(IpcChannel.TFT_GET_COIN_COUNT, async () => tftOperator.getCoinCount());
+  ipcMain.handle(IpcChannel.TFT_GET_LOOT_ORBS, async () => tftOperator.getLootOrbs());
+  ipcMain.handle(IpcChannel.TFT_GET_STAGE_INFO, async () => tftOperator.getGameStage());
+  ipcMain.handle(IpcChannel.TFT_SAVE_STAGE_SNAPSHOTS, async () => tftOperator.saveStageSnapshots());
+  ipcMain.handle(IpcChannel.TFT_TEST_SAVE_BENCH_SLOT_SNAPSHOT, async () => tftOperator.saveBenchSlotSnapshots());
+  ipcMain.handle(IpcChannel.TFT_TEST_SAVE_FIGHT_BOARD_SLOT_SNAPSHOT, async () => tftOperator.saveFightBoardSlotSnapshots());
+  ipcMain.handle(IpcChannel.TFT_TEST_SAVE_QUIT_BUTTON_SNAPSHOT, async () => tftOperator.saveQuitButtonSnapshot());
   ipcMain.handle(IpcChannel.LINEUP_GET_ALL, async (_event, season) => {
     if (season) {
       return lineupLoader.getLineupsBySeason(season);
@@ -13611,6 +13637,18 @@ function registerHandler() {
   });
   ipcMain.handle(IpcChannel.HEX_GET_SCHEDULED_STOP, async () => {
     return hexService.scheduledStopTime;
+  });
+  ipcMain.handle(IpcChannel.HEX_SET_STOP_AFTER_GAMES, async (_event, count) => {
+    hexService.setStopAfterGames(count);
+  });
+  ipcMain.handle(IpcChannel.HEX_GET_STOP_AFTER_GAMES, async () => {
+    return {
+      count: hexService.stopAfterGameCount,
+      remaining: hexService.stopAfterGameRemaining
+    };
+  });
+  ipcMain.handle(IpcChannel.HEX_CLEAR_STOP_AFTER_GAMES, async () => {
+    hexService.clearStopAfterGames();
   });
   ipcMain.handle(IpcChannel.SETTINGS_GET, async (_event, key) => {
     return settingsStore.get(key);

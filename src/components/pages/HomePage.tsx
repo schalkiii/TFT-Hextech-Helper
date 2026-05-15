@@ -375,7 +375,7 @@ const GamesCountSelect = styled.select<{ theme: ThemeType }>`
 /** 运行局数确认按钮 */
 const GamesCountButton = styled.button<{ theme: ThemeType; $active: boolean }>`
   background: ${props => props.$active
-    ? props.theme.colors.danger
+    ? props.theme.colors.error
     : `linear-gradient(135deg, ${props.theme.colors.primary} 0%, ${props.theme.colors.primaryHover} 100%)`};
   color: ${props => props.theme.colors.textOnPrimary};
   border: none;

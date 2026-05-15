@@ -178,7 +178,7 @@ class LCUConnector extends EventEmitter {
             // 如果是 ClientNotFoundError 或者是 exec 执行出错（比如进程没找到），我们需要进一步判断
             
             // Windows 下检查是否是因为权限问题导致找不到进程
-            if (isWindows && executionOptions['shell'] === 'powershell') {
+            if (isWindows && (executionOptions as any)['shell'] === 'powershell') {
                 try {
                     const checkAdminCmd = `if ((Get-Process -Name ${name} -ErrorAction SilentlyContinue | Where-Object {!$_.Handle -and !$_.Path})) {Write-Output "True"} else {Write-Output "False"}`;
                     const { stdout: isAdmin } = await exec(checkAdminCmd, executionOptions);

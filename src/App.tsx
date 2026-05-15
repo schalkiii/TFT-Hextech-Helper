@@ -25,7 +25,7 @@ function App() {
 
     // 监听主进程发来的 Toast 事件
     useEffect(() => {
-        // @ts-expect-error - window.ipc 由 preload.ts 暴露
+        // window.ipc 由 preload.ts 暴露
         const cleanup = window.ipc?.on('show-toast', (payload: ToastPayload) => {
             toast(payload.message, {
                 type: payload.type || 'info',

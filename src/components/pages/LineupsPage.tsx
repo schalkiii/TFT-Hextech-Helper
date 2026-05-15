@@ -2484,7 +2484,7 @@ const LineupsPage: React.FC = () => {
         
         // 将 Set 转换为数组保存
         const idsArray = Array.from(selectedIds);
-        window.lineup.setSelectedIds(idsArray).catch(err => {
+        window.lineup.setSelectedIds(idsArray).catch((err: any) => {
             console.error('保存选中状态失败:', err);
         });
     }, [selectedIds, loading]);

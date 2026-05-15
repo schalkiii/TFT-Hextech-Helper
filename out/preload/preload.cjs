@@ -55,6 +55,10 @@ var IpcChannel = /* @__PURE__ */ ((IpcChannel2) => {
   IpcChannel2["HEX_CLEAR_SCHEDULED_STOP"] = "hex-clear-scheduled-stop";
   IpcChannel2["HEX_GET_SCHEDULED_STOP"] = "hex-get-scheduled-stop";
   IpcChannel2["HEX_SCHEDULED_STOP_TRIGGERED"] = "hex-scheduled-stop-triggered";
+  IpcChannel2["HEX_SET_STOP_AFTER_GAMES"] = "hex-set-stop-after-games";
+  IpcChannel2["HEX_GET_STOP_AFTER_GAMES"] = "hex-get-stop-after-games";
+  IpcChannel2["HEX_CLEAR_STOP_AFTER_GAMES"] = "hex-clear-stop-after-games";
+  IpcChannel2["HEX_STOP_AFTER_GAMES_TRIGGERED"] = "hex-stop-after-games-triggered";
   IpcChannel2["APP_GET_VERSION"] = "app-get-version";
   IpcChannel2["APP_CHECK_UPDATE"] = "app-check-update";
   IpcChannel2["OVERLAY_SHOW"] = "overlay-show";
@@ -157,6 +161,27 @@ const hexApi = {
     const listener = () => callback();
     electron.ipcRenderer.on(IpcChannel.HEX_SCHEDULED_STOP_TRIGGERED, listener);
     return () => electron.ipcRenderer.removeListener(IpcChannel.HEX_SCHEDULED_STOP_TRIGGERED, listener);
+  },
+  /** 设置运行 N 局后停止 */
+  setStopAfterGames: (count) => {
+    return electron.ipcRenderer.invoke(IpcChannel.HEX_SET_STOP_AFTER_GAMES, count);
+  },
+  /** 获取当前"运行N局后停止"设置 */
+  getStopAfterGames: () => {
+    return electron.ipcRenderer.invoke(IpcChannel.HEX_GET_STOP_AFTER_GAMES);
+  },
+  /** 取消运行 N 局后停止 */
+  clearStopAfterGames: () => {
+    return electron.ipcRenderer.invoke(IpcChannel.HEX_CLEAR_STOP_AFTER_GAMES);
+  },
+  /**
+   * 监听"运行N局后停止"状态更新事件
+   * @param callback 回调函数，参数为设置的局数和剩余局数
+   */
+  onStopAfterGamesTriggered: (callback) => {
+    const listener = (_event, count, remaining) => callback(count, remaining);
+    electron.ipcRenderer.on(IpcChannel.HEX_STOP_AFTER_GAMES_TRIGGERED, listener);
+    return () => electron.ipcRenderer.removeListener(IpcChannel.HEX_STOP_AFTER_GAMES_TRIGGERED, listener);
   }
 };
 electron.contextBridge.exposeInMainWorld("hex", hexApi);
