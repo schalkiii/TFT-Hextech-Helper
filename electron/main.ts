@@ -546,6 +546,39 @@ app.whenReady().then(async () => {
     // 注册"本局结束后停止"快捷键（从设置中读取）
     const savedStopAfterGameHotkey = settingsStore.get('stopAfterGameHotkeyAccelerator');
     registerStopAfterGameHotkey(savedStopAfterGameHotkey);
+    
+    // ========================================================================
+    // 命令行参数处理
+    // 支持：
+    //   --start       启动后自动开始挂机
+    //   --games=N     运行 N 局后停止（需配合 --start 使用）
+    // ========================================================================
+    const argv = process.argv.slice(2);
+    const shouldAutoStart = argv.includes('--start');
+    const gamesArg = argv.find(arg => arg.startsWith('--games='));
+    const autoStartGames = gamesArg ? parseInt(gamesArg.split('=')[1], 10) : 0;
+    
+    if (shouldAutoStart) {
+        console.log(`🚀 [Main] 检测到 --start 参数，将在初始化完成后自动启动`);
+        
+        if (autoStartGames > 0) {
+            console.log(`🚀 [Main] 检测到 --games=${autoStartGames} 参数，将在运行 ${autoStartGames} 局后停止`);
+            hexService.setStopAfterGames(autoStartGames);
+        }
+        
+        // 延迟一小段时间后自动启动（等待窗口创建完成和 LCU 连接）
+        setTimeout(async () => {
+            if (!hexService.isRunning) {
+                console.log('🚀 [Main] 正在自动启动挂机...');
+                const success = await hexService.start();
+                if (success) {
+                    console.log('✅ [Main] 自动启动成功');
+                } else {
+                    console.error('❌ [Main] 自动启动失败');
+                }
+            }
+        }, 3000);
+    }
 })
 
 function init() {
@@ -776,6 +809,20 @@ function registerHandler() {
     })
     ipcMain.handle(IpcChannel.HEX_GET_SCHEDULED_STOP, async () => {
         return hexService.scheduledStopTime;
+    })
+    
+    // 运行N局后停止功能
+    ipcMain.handle(IpcChannel.HEX_SET_STOP_AFTER_GAMES, async (_event, count: number) => {
+        hexService.setStopAfterGames(count);
+    })
+    ipcMain.handle(IpcChannel.HEX_GET_STOP_AFTER_GAMES, async () => {
+        return {
+            count: hexService.stopAfterGameCount,
+            remaining: hexService.stopAfterGameRemaining,
+        };
+    })
+    ipcMain.handle(IpcChannel.HEX_CLEAR_STOP_AFTER_GAMES, async () => {
+        hexService.clearStopAfterGames();
     })
     
     // 通用设置读写（支持点号路径，如 'window.bounds'）

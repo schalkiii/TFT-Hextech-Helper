@@ -301,6 +301,102 @@ const StopAfterGameBanner = styled.div<{ theme: ThemeType }>`
   animation: ${slideInFromTop} 0.3s ease-out forwards;
 `;
 
+/** "运行N局后停止"信息横幅 */
+const StopAfterGamesBanner = styled.div<{ theme: ThemeType }>`
+  background-color: ${props => props.theme.colors.success}20;
+  border: 1px solid ${props => props.theme.colors.success}60;
+  border-radius: ${props => props.theme.borderRadius};
+  padding: 6px 12px;
+  margin-bottom: 32px;
+  margin-top: -16px;
+  font-size: 1rem;
+  color: ${props => props.theme.colors.success};
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  
+  /* 入场动画 */
+  animation: ${slideInFromTop} 0.3s ease-out forwards;
+`;
+
+/** 运行局数选择器容器 */
+const GamesCountContainer = styled.div<{ theme: ThemeType }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+`;
+
+/** 运行局数选择器标签 */
+const GamesCountLabel = styled.span<{ theme: ThemeType }>`
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.textSecondary};
+`;
+
+/** 运行局数选择器（下拉框） */
+const GamesCountSelect = styled.select<{ theme: ThemeType }>`
+  appearance: none;
+  background: ${props => props.theme.colors.elementBg};
+  color: ${props => props.theme.colors.text};
+  border: 1px solid ${props => props.theme.colors.border};
+  border-radius: 8px;
+  padding: 4px 28px 4px 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  min-width: 72px;
+  text-align: center;
+  
+  /* 自定义下拉箭头 */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+
+  &:hover {
+    border-color: ${props => props.theme.colors.primary};
+  }
+
+  &:focus-visible {
+    border-color: ${props => props.theme.colors.primary};
+    box-shadow: 0 0 0 2px ${props => props.theme.colors.primary}40;
+  }
+
+  option {
+    background: ${props => props.theme.colors.elementBg};
+    color: ${props => props.theme.colors.text};
+  }
+`;
+
+/** 运行局数确认按钮 */
+const GamesCountButton = styled.button<{ theme: ThemeType; $active: boolean }>`
+  background: ${props => props.$active
+    ? props.theme.colors.danger
+    : `linear-gradient(135deg, ${props.theme.colors.primary} 0%, ${props.theme.colors.primaryHover} 100%)`};
+  color: ${props => props.theme.colors.textOnPrimary};
+  border: none;
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 // ============================================
 // 游戏模式切换样式（两级选择器）
 // ============================================
@@ -1112,6 +1208,9 @@ export const HomePage = () => {
     const [isElevated, setIsElevated] = useState<boolean | null>(null);
     // 新增："本局结束后停止"状态
     const [stopAfterGame, setStopAfterGame] = useState(false);
+    // 新增："运行N局后停止"状态
+    const [stopAfterGameCount, setStopAfterGameCount] = useState(0);
+    const [stopAfterGameRemaining, setStopAfterGameRemaining] = useState(0);
     // 新增：是否有选中的阵容（针对当前赛季）
     const [hasSelectedLineup, setHasSelectedLineup] = useState(false);
     // 新增：统计数据（本次会话局数、历史总局数、运行时长）
@@ -1339,6 +1438,29 @@ export const HomePage = () => {
             }
         });
         
+        return () => cleanup();
+    }, []);
+
+    // 监听"运行N局后停止"状态更新事件
+    useEffect(() => {
+        // 初始加载时获取当前设置
+        const loadInitial = async () => {
+            try {
+                const result = await window.hex.getStopAfterGames();
+                setStopAfterGameCount(result.count);
+                setStopAfterGameRemaining(result.remaining);
+            } catch (error) {
+                console.error('加载"运行N局后停止"设置失败:', error);
+            }
+        };
+        loadInitial();
+
+        const cleanup = window.hex.onStopAfterGamesTriggered((count: number, remaining: number) => {
+            console.log(`🎮 [HomePage] 收到"运行N局后停止"更新: count=${count}, remaining=${remaining}`);
+            setStopAfterGameCount(count);
+            setStopAfterGameRemaining(remaining);
+        });
+
         return () => cleanup();
     }, []);
 
@@ -1608,6 +1730,24 @@ export const HomePage = () => {
     };
 
     /**
+     * 运行局数选择器状态
+     */
+    const [selectedGamesCount, setSelectedGamesCount] = useState(1);
+
+    /**
+     * 设置/取消"运行N局后停止"
+     */
+    const handleStopAfterGames = async () => {
+        if (stopAfterGameCount > 0) {
+            await window.hex.clearStopAfterGames();
+            toast.info('已取消运行N局后停止');
+        } else {
+            await window.hex.setStopAfterGames(selectedGamesCount);
+            toast.success(`已设置运行 ${selectedGamesCount} 局后自动停止`);
+        }
+    };
+
+    /**
      * 根据 profileIconId 生成头像 URL
      * @param iconId - 头像图标 ID
      */
@@ -1832,6 +1972,16 @@ export const HomePage = () => {
                 </StopAfterGameBanner>
             )}
 
+            {/* "运行N局后停止"状态提示 */}
+            {stopAfterGameCount > 0 && (
+                <StopAfterGamesBanner>
+                    <TimerOffIcon style={{ fontSize: '1rem' }} />
+                    {stopAfterGameRemaining > 0
+                        ? `已设置运行 ${stopAfterGameCount} 局后停止，还剩 ${stopAfterGameRemaining} 局`
+                        : `已运行完 ${stopAfterGameCount} 局，本局结束后将自动停止挂机`}
+                </StopAfterGamesBanner>
+            )}
+
             {/* 控制按钮区域 - 仅包含开始/停止按钮 */}
             <ControlRow>
                 <ButtonWrapper>
@@ -1865,6 +2015,32 @@ export const HomePage = () => {
                     </ControlButton>
                 </ButtonWrapper>
             </ControlRow>
+
+            {/* 运行N局后停止 - 选择器 */}
+            <GamesCountContainer>
+                <GamesCountLabel>运行</GamesCountLabel>
+                <GamesCountSelect
+                    value={selectedGamesCount}
+                    onChange={(e) => setSelectedGamesCount(Number(e.target.value))}
+                    disabled={isRunning}
+                >
+                    <option value={1}>1 局</option>
+                    <option value={3}>3 局</option>
+                    <option value={5}>5 局</option>
+                    <option value={10}>10 局</option>
+                    <option value={20}>20 局</option>
+                    <option value={50}>50 局</option>
+                    <option value={100}>100 局</option>
+                </GamesCountSelect>
+                <GamesCountLabel>后停止</GamesCountLabel>
+                <GamesCountButton
+                    $active={stopAfterGameCount > 0}
+                    onClick={handleStopAfterGames}
+                    disabled={isRunning}
+                >
+                    {stopAfterGameCount > 0 ? '取消' : '设置'}
+                </GamesCountButton>
+            </GamesCountContainer>
 
             {/* 日志面板 */}
             <LogPanel isVisible={true} />

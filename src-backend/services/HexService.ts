@@ -12,7 +12,7 @@ import { StartState } from "../states/StartState.ts";
 import { sleep } from "../utils/HelperTools.ts";
 import { settingsStore } from "../utils/SettingsStore.ts";
 import { TFTMode } from "../TFTProtocol.ts";
-import { notifyStatsUpdated, notifyStopAfterGameState, notifyScheduledStopTriggered, showToast } from "../utils/ToastBridge.ts";
+import { notifyStatsUpdated, notifyStopAfterGameState, notifyScheduledStopTriggered, notifyStopAfterGamesState, showToast } from "../utils/ToastBridge.ts";
 import { analyticsManager, AnalyticsEvent } from "../utils/AnalyticsManager.ts";
 
 /** 状态转换间隔 (ms) - 设置较短以提高状态切换响应速度 */
@@ -47,6 +47,15 @@ export class HexService {
     private _scheduledStopTimer: NodeJS.Timeout | null = null;
     /** 定时停止的目标时间（ISO 字符串），用于 UI 展示和持久化 */
     private _scheduledStopTime: string | null = null;
+
+    // ========================================================================
+    // 运行 N 局后停止功能
+    // ========================================================================
+
+    /** 设置的"运行N局后停止"的局数，0 表示未设置 */
+    private _stopAfterGameCount: number = 0;
+    /** 剩余待完成局数，0 表示未设置 */
+    private _stopAfterGameRemaining: number = 0;
 
     /**
      * 私有构造函数，确保单例
@@ -170,6 +179,53 @@ export class HexService {
         this._scheduledStopTime = null;
     }
 
+    // ========================================================================
+    // 运行 N 局后停止
+    // ========================================================================
+
+    /**
+     * 获取设置的"运行N局后停止"的局数
+     * @returns 0 表示未设置，正数表示设置的局数
+     */
+    public get stopAfterGameCount(): number {
+        return this._stopAfterGameCount;
+    }
+
+    /**
+     * 获取剩余待完成局数
+     * @returns 0 表示未设置或已完成，正数表示剩余局数
+     */
+    public get stopAfterGameRemaining(): number {
+        return this._stopAfterGameRemaining;
+    }
+
+    /**
+     * 设置运行 N 局后停止
+     * @param count 要运行的局数（必须 > 0）
+     * @description 当完成指定局数后，自动启用"本局结束后停止"
+     */
+    public setStopAfterGames(count: number): void {
+        if (count <= 0) {
+            this.clearStopAfterGames();
+            return;
+        }
+
+        this._stopAfterGameCount = count;
+        this._stopAfterGameRemaining = count;
+        logger.info(`[HexService] 🎯 设置运行 ${count} 局后停止`);
+        notifyStopAfterGamesState(this._stopAfterGameCount, this._stopAfterGameRemaining);
+    }
+
+    /**
+     * 取消运行 N 局后停止
+     */
+    public clearStopAfterGames(): void {
+        this._stopAfterGameCount = 0;
+        this._stopAfterGameRemaining = 0;
+        logger.info('[HexService] 🎯 已取消运行N局后停止');
+        notifyStopAfterGamesState(0, 0);
+    }
+
     /**
      * 获取本次会话已挂机局数
      */
@@ -203,10 +259,24 @@ export class HexService {
 
         logger.info(`[HexService] 📊 本局完成！本次会话: ${this._sessionGamesPlayed} 局, 历史总计: ${currentTotal + 1} 局`);
 
-        // 3. 通知前端统计数据已更新（实时刷新统计面板）
+        // 3. 检查"运行N局后停止"
+        if (this._stopAfterGameRemaining > 0) {
+            this._stopAfterGameRemaining--;
+            logger.info(`[HexService] 🎯 运行N局后停止: 剩余 ${this._stopAfterGameRemaining} 局`);
+            notifyStopAfterGamesState(this._stopAfterGameCount, this._stopAfterGameRemaining);
+
+            if (this._stopAfterGameRemaining <= 0) {
+                logger.info('[HexService] 🎯 已运行完指定局数，自动启用"本局结束后停止"');
+                this._stopAfterCurrentGame = true;
+                notifyStopAfterGameState(true);
+                showToast.info(`🎯 已运行完 ${this._stopAfterGameCount} 局，本局结束后将自动停止挂机`, { position: 'top-center' });
+            }
+        }
+
+        // 4. 通知前端统计数据已更新（实时刷新统计面板）
         notifyStatsUpdated(this.getStatistics());
 
-        // 4. 上报游戏完成事件到 Google Analytics
+        // 5. 上报游戏完成事件到 Google Analytics
         analyticsManager.trackEvent(AnalyticsEvent.GAME_COMPLETED, {
             session_games: this._sessionGamesPlayed,
             total_games: currentTotal + 1,

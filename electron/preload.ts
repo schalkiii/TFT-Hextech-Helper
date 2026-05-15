@@ -109,6 +109,27 @@ const hexApi = {
         ipcRenderer.on(IpcChannel.HEX_SCHEDULED_STOP_TRIGGERED, listener);
         return () => ipcRenderer.removeListener(IpcChannel.HEX_SCHEDULED_STOP_TRIGGERED, listener);
     },
+    /** 设置运行 N 局后停止 */
+    setStopAfterGames: (count: number): Promise<void> => {
+        return ipcRenderer.invoke(IpcChannel.HEX_SET_STOP_AFTER_GAMES, count);
+    },
+    /** 获取当前"运行N局后停止"设置 */
+    getStopAfterGames: (): Promise<{ count: number; remaining: number }> => {
+        return ipcRenderer.invoke(IpcChannel.HEX_GET_STOP_AFTER_GAMES);
+    },
+    /** 取消运行 N 局后停止 */
+    clearStopAfterGames: (): Promise<void> => {
+        return ipcRenderer.invoke(IpcChannel.HEX_CLEAR_STOP_AFTER_GAMES);
+    },
+    /**
+     * 监听"运行N局后停止"状态更新事件
+     * @param callback 回调函数，参数为设置的局数和剩余局数
+     */
+    onStopAfterGamesTriggered: (callback: (count: number, remaining: number) => void): (() => void) => {
+        const listener = (_event: IpcRendererEvent, count: number, remaining: number) => callback(count, remaining);
+        ipcRenderer.on(IpcChannel.HEX_STOP_AFTER_GAMES_TRIGGERED, listener);
+        return () => ipcRenderer.removeListener(IpcChannel.HEX_STOP_AFTER_GAMES_TRIGGERED, listener);
+    },
 }
 export type HexApi = typeof hexApi
 contextBridge.exposeInMainWorld('hex', hexApi)

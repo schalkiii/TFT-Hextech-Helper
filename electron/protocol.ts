@@ -72,6 +72,11 @@ export enum IpcChannel {
     HEX_GET_SCHEDULED_STOP = 'hex-get-scheduled-stop',        // 获取定时停止时间
     // 定时停止触发事件（主进程 -> 渲染进程）
     HEX_SCHEDULED_STOP_TRIGGERED = 'hex-scheduled-stop-triggered',  // 定时停止触发时通知前端
+    // 运行N局后停止功能
+    HEX_SET_STOP_AFTER_GAMES = 'hex-set-stop-after-games',          // 设置运行N局后停止
+    HEX_GET_STOP_AFTER_GAMES = 'hex-get-stop-after-games',          // 获取当前设置
+    HEX_CLEAR_STOP_AFTER_GAMES = 'hex-clear-stop-after-games',      // 取消运行N局后停止
+    HEX_STOP_AFTER_GAMES_TRIGGERED = 'hex-stop-after-games-triggered',  // 运行N局后停止触发事件（主进程 -> 渲染进程）
     // 版本与更新
     APP_GET_VERSION = 'app-get-version',          // 获取当前应用版本
     APP_CHECK_UPDATE = 'app-check-update',        // 检查更新（返回最新版本信息）

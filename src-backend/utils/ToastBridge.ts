@@ -119,3 +119,17 @@ export function notifyScheduledStopTriggered(): void {
         win.webContents.send(IpcChannel.HEX_SCHEDULED_STOP_TRIGGERED);
     }
 }
+
+/**
+ * 通知前端"运行N局后停止"状态更新
+ * @param count 设置的局数（0 表示未设置）
+ * @param remaining 剩余局数（0 表示未设置或已完成）
+ * 
+ * @description 在设置/取消/每局完成时调用，通知前端实时更新 UI
+ */
+export function notifyStopAfterGamesState(count: number, remaining: number): void {
+    const windows = BrowserWindow.getAllWindows();
+    for (const win of windows) {
+        win.webContents.send(IpcChannel.HEX_STOP_AFTER_GAMES_TRIGGERED, count, remaining);
+    }
+}
