@@ -101,6 +101,7 @@ class LCUManager extends EventEmitter {
             baseURL: `https://127.0.0.1:${this.port}`,
             httpsAgent: this.httpsAgent, // 把我们的"通行证"交给 axios
             proxy: false,   // ← 关键：禁止任何系统/环境变量代理!!!这里debug找了一万年才发现是这个问题。
+            timeout: 30000, // 30 秒超时，防止 LCU API 请求永久挂起
             auth: {
                 username: 'riot',
                 password: this.token
@@ -182,18 +183,21 @@ class LCUManager extends EventEmitter {
      */
     public async request(method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', endpoint: string, body?: object): Promise<any> {
         try {
-            // 在这里打印出完整的请求 URL
             const fullUrl = `${this.api.defaults.baseURL}${endpoint}`;
             console.log(`➡️  [LCUManager] 准备发起请求: ${method} ${fullUrl}`);
 
             const response = await this.api.request({
                 method: method,
-                url: fullUrl, // axios 会自动拼接 baseURL
+                url: endpoint,
                 data: body
             });
             return response.data; // axios 会自动处理 JSON 解析，结果在 response.data 里
         } catch (error) {
             if (axios.isAxiosError(error)) {
+                if (error.code === 'ECONNABORTED') {
+                    console.error(`❌ [LCUManager] 请求超时: ${method} ${endpoint}`);
+                    throw new Error(`LCU 请求超时: ${endpoint}`);
+                }
                 console.error(`❌ [LCUManager] Axios 请求失败: ${error.message}`);
                 throw new Error(`LCU 请求失败:endpoint:${endpoint} state: ${error.response?.status} - ${error.response?.statusText}`);
             } else {
